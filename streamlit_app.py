@@ -24,7 +24,10 @@ text = st.text_area("✍️ Enter your text below:", "Narendra Modi was born in 
 
 if st.button("🔍 Analyze Entities"):
     with st.spinner("Analyzing..."):
-        results = ner(text)
+        raw_results = ner(text)
+
+        # Filter only alphabetic entities
+        results = [r for r in raw_results if r['word'].replace(' ', '').isalpha()]
 
         if results:
             st.success("Entities detected:")
@@ -47,4 +50,4 @@ if st.button("🔍 Analyze Entities"):
 
             st.markdown(f"<div style='line-height:1.8'>{highlighted_text}</div>", unsafe_allow_html=True)
         else:
-            st.warning("No entities were detected.")
+            st.warning("No valid alphabetic entities were detected.")
