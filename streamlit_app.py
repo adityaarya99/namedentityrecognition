@@ -20,7 +20,7 @@ def load_ner_pipeline():
 ner = load_ner_pipeline()
 
 # Text input
-text = st.text_area("✍️ Enter your text below:", "Narendra Modi was born in Gujarat and served as prime minister of the India.")
+text = st.text_area("✍️ Enter your text below:", "Narendra Modi was born in Gujarat and serving as prime minister of the India.")
 
 if st.button("🔍 Analyze Entities"):
     with st.spinner("Analyzing..."):
