@@ -24,14 +24,46 @@ text = st.text_area("✍️ Enter your text below:", "Narendra Modi was born in 
 
 if st.button("🔍 Analyze Entities"):
     with st.spinner("Analyzing..."):
-        raw_results = ner(text)
+        results = ner(text)
 
-        # Filter only alphabetic entities
-        results = [r for r in raw_results if r['word'].replace(' ', '').isalpha()]
+        # Merge subwords correctly into single entities
+        merged_results = []
+        current_entity = ""
+        current_label = None
+        for r in results:
+            # If the entity is not a subword (doesn't start with '##')
+            if r['word'].startswith("##"):
+                # Merge with the previous entity
+                current_entity += r['word'][2:]
+            else:
+                # Save the previous entity and start a new one
+                if current_entity:
+                    merged_results.append({
+                        "word": current_entity,
+                        "entity_group": current_label,
+                        "score": score,
+                        "start": start,
+                        "end": end
+                    })
+                current_entity = r['word']
+                current_label = r['entity_group']
+                score = r['score']
+                start = r['start']
+                end = r['end']
 
-        if results:
+        # Don't forget to append the last entity
+        if current_entity:
+            merged_results.append({
+                "word": current_entity,
+                "entity_group": current_label,
+                "score": score,
+                "start": start,
+                "end": end
+            })
+
+        if merged_results:
             st.success("Entities detected:")
-            df = pd.DataFrame(results)
+            df = pd.DataFrame(merged_results)
             df = df[["word", "entity_group", "score", "start", "end"]]
             df.columns = ["Entity", "Label", "Confidence", "Start", "End"]
             df["Confidence"] = df["Confidence"].apply(lambda x: f"{x*100:.2f}%")
@@ -41,7 +73,7 @@ if st.button("🔍 Analyze Entities"):
             st.markdown("### 📌 Highlighted Entities in Text")
             highlighted_text = text
             offset = 0
-            for r in sorted(results, key=lambda x: x['start']):
+            for r in sorted(merged_results, key=lambda x: x['start']):
                 start = r['start'] + offset
                 end = r['end'] + offset
                 tag = f"<mark style='background-color:#ffeeba; border-radius:3px;'>{text[start:end]} <sub>[{r['entity_group']}]</sub></mark>"
@@ -50,4 +82,4 @@ if st.button("🔍 Analyze Entities"):
 
             st.markdown(f"<div style='line-height:1.8'>{highlighted_text}</div>", unsafe_allow_html=True)
         else:
-            st.warning("No valid alphabetic entities were detected.")
+            st.warning("No entities were detected.")
